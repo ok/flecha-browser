@@ -7,7 +7,7 @@
  */
 import type { Store } from '../shared/store';
 import { SHORTCUTS, SPACE_MODIFIER, keysFor } from './lib/shortcuts';
-import { callAs, caller, flashIn, handle, run as runHub, sendToWindow, windowOf } from './hub';
+import { broadcast, callAs, caller, flashIn, handle, run as runHub, sendToWindow, windowOf } from './hub';
 import type { WindowView } from '../shared/types';
 import { flechaMenus } from './lib/menus';
 import { incognito } from './incognito';
@@ -292,6 +292,7 @@ function registerPeek(ctx: NativeContext) {
  *  - openFlechinha(url?, tabId?): with a Flecha tab id, that tab's page moves into it and the
  *    Flecha tab closes; otherwise it opens `url`.
  *  - flechinha:openInFlecha(windowId): its page moves back as an active Today tab.
+ *  - flechinha:editAddress(windowId): its toolbar's address opens for typing.
  * Windows that are Flechinhas aren't Flecha's: isFlechinha(windowId) tells them apart.
  */
 const flechinhas = new Set<number>();
@@ -355,6 +356,8 @@ function registerFlechinha(ctx: NativeContext) {
       const tabId = await chrome.flechaPrivate.openInFlecha(Number(windowId));
       ctx.adoptTab?.(tabId);
     },
+    // Its empty page's search field (flechaApi.ts) asks for the toolbar's address, as ⌘L does.
+    'flechinha:editAddress': (windowId: number) => broadcast('flechinha:command', Number(windowId), 'openLocation'),
   });
 }
 
