@@ -442,9 +442,19 @@ export class Store {
     if (to.folderId && (to.folderId === folderId || findFolder(found.folder.children, to.folderId))) return false;
     const list = to.folderId ? findFolder(space.pinned, to.folderId)?.children : space.pinned;
     if (!list) return false;
+    const from = this.state.spaces.find((s) => findFolder(s.pinned, folderId));
     found.parent.splice(found.parent.indexOf(found.folder), 1);
     const i = to.beforeId ? list.findIndex((n) => nodeId(n) === to.beforeId) : -1;
     list.splice(i < 0 ? list.length : i, 0, found.folder);
+    // The Space it left shows its next tab if the one on screen went with the folder, as moveToSpace does.
+    if (from && from !== space) {
+      const moved = pinnedTabIds(found.folder.children);
+      if (from.activeTabId && moved.includes(from.activeTabId)) from.activeTabId = from.today[0];
+      for (const view of this.views) {
+        const own = view.activeTabs[from.id];
+        if (own && moved.includes(own)) view.activeTabs[from.id] = this.nextInToday(view, from, 0);
+      }
+    }
     this.changed();
     return true;
   }

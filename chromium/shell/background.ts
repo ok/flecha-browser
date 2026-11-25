@@ -1013,12 +1013,18 @@ async function start() {
       .filter(Boolean);
     const links = tabs.map((t) => t.url);
     const markdown = tabs.map((t) => `- [${t.customTitle ?? t.title}](${t.url})`);
+    const otherSpaces = store.state.spaces.filter((s) => s.id !== store.activeSpaceOf(here().view).id);
     return [
       { label: 'Rename…', run: { rename: folderId } },
       { label: 'Change Icon…', run: { rename: `icon:${folderId}` } },
       ...(folder.emoji ? [{ label: 'Remove Icon', run: does('setFolderEmoji', folderId, '') }] : []),
       { label: 'New Folder Inside', run: does('newFolderIn', folderId) },
       { label: folder.open ? 'Collapse' : 'Expand', run: does('toggleFolder', folderId) },
+      {
+        label: 'Move to Space',
+        enabled: otherSpaces.length > 0,
+        submenu: otherSpaces.map((s) => ({ ...spaceMenuLabel(s, store.state.monochromeIcons), run: does('moveFolderToSpace', folderId, s.id) })),
+      },
       SEPARATOR,
       { label: 'Copy Links', enabled: links.length > 0, run: { copy: links.join('\n'), message: links.length === 1 ? 'Link copied' : `${links.length} links copied` } },
       { label: 'Copy as Markdown List', enabled: links.length > 0, run: { copy: markdown.join('\n'), message: 'Markdown list copied' } },
@@ -1166,6 +1172,8 @@ async function start() {
     togglePin: spacesOnly((id: string) => store.togglePin(here().view, id)),
     toggleFavorite: spacesOnly((id: string) => store.toggleFavorite(here().view, id)),
     moveToSpace: spacesOnly((id: string, spaceId: string) => store.moveToSpace(id, spaceId)),
+    // The folder, with all that is in it, goes to the end of the other Space's pinned tabs.
+    moveFolderToSpace: spacesOnly((id: string, spaceId: string) => void store.moveFolder(String(id), { spaceId: String(spaceId) })),
     reloadTab: (id: string) => {
       const chromeId = live.get(id);
       if (chromeId !== undefined) void chrome.tabs.reload(chromeId);
