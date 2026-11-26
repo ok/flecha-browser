@@ -1078,6 +1078,7 @@ async function start() {
     forward: onActive((id) => chrome.tabs.goForward(id).catch(() => undefined)),
     reload: onActive((id) => chrome.tabs.reload(id)),
     switchSpace: (id: string) => store.switchSpace(here().view, id),
+    moveSpace: spacesOnly((id: string, beforeId?: string) => store.moveSpace(String(id), typeof beforeId === 'string' ? beforeId : undefined)),
     newSpace: spacesOnly(() => {
       const win = here();
       editSpace(store.newSpace(win.view).id, win);
